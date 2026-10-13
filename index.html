@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Vacancy Registration</title>
+<style>
+  :root {
+    --ink: #1c2540;
+    --muted: #5b6478;
+    --line: #cfd6e2;
+    --paper: #ffffff;
+    --bg: #eaeff5;
+    --accent: #0e7c6b;
+    --accent-dark: #0a5e51;
+    --error: #b3261e;
+    --ok: #1b7f4b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 16px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .card {
+    max-width: 820px;
+    margin: 0 auto;
+    background: var(--paper);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 28px rgba(28, 37, 64, .12);
+  }
+  header {
+    background: var(--ink);
+    color: #fff;
+    padding: 28px 36px;
+  }
+  header h1 { margin: 0 0 4px; font-size: 1.7rem; font-weight: 650; }
+  header p { margin: 0; color: #b8c2da; font-size: .95rem; }
+
+  form { padding: 12px 36px 36px; }
+  fieldset { border: 0; padding: 0; margin: 24px 0 0; min-width: 0; }
+  legend {
+    font-size: 1.05rem;
+    font-weight: 650;
+    padding: 0 0 8px;
+    margin-bottom: 14px;
+    width: 100%;
+    border-bottom: 2px solid var(--accent);
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 22px; }
+  .full { grid-column: 1 / -1; }
+
+  .field { display: flex; flex-direction: column; }
+  label, .label { font-weight: 600; font-size: .92rem; margin-bottom: 6px; }
+  .req::after { content: " *"; color: var(--error); }
+  .hint { color: var(--muted); font-size: .8rem; margin-top: 4px; }
+
+  input, select, textarea {
+    font: inherit;
+    color: var(--ink);
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+    width: 100%;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  textarea { resize: vertical; min-height: 130px; }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(14, 124, 107, .2);
+  }
+
+  /* Validation states (shown only after the user has interacted) */
+  input:user-invalid, select:user-invalid, textarea:user-invalid {
+    border-color: var(--error);
+    background: #fff6f5;
+  }
+  input:user-valid, select:user-valid, textarea:user-valid {
+    border-color: var(--ok);
+  }
+  .error { display: none; color: var(--error); font-size: .8rem; margin-top: 4px; }
+  input:user-invalid ~ .error,
+  select:user-invalid ~ .error,
+  textarea:user-invalid ~ .error { display: block; }
+  input:user-invalid ~ .hint,
+  select:user-invalid ~ .hint,
+  textarea:user-invalid ~ .hint { display: none; }
+
+  /* Radio and checkbox groups */
+  .choices { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+  .choices label, .agree label {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 400; margin: 0; cursor: pointer;
+  }
+  .choices input, .agree input {
+    width: 18px; height: 18px; padding: 0; accent-color: var(--accent);
+  }
+  .agree { margin-top: 24px; }
+
+  .actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+  button {
+    font: inherit; font-weight: 600;
+    padding: 12px 28px; border-radius: 6px; cursor: pointer; border: 2px solid var(--accent);
+  }
+  button[type="submit"] { background: var(--accent); color: #fff; }
+  button[type="submit"]:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  button[type="reset"] { background: #fff; color: var(--accent); }
+  button[type="reset"]:hover { background: #eef8f6; }
+  button:focus-visible { outline: 3px solid rgba(14, 124, 107, .4); outline-offset: 2px; }
+
+  @media (max-width: 640px) {
+    header, form { padding-left: 20px; padding-right: 20px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* Login screen */
+  .login { max-width: 420px; margin-top: 8vh; }
+  .login form { padding: 28px 36px 36px; }
+  .login .field { margin-bottom: 18px; }
+  .login button[type="submit"] { width: 100%; }
+  .alert { display: none; padding: 10px 12px; border-radius: 6px; margin-bottom: 16px;
+           background: #fdecea; color: var(--error); font-size: .9rem; }
+  .alert.show { display: block; }
+  .demo { color: var(--muted); font-size: .8rem; text-align: center; margin-top: 14px; }
+  .pw-wrap { position: relative; }
+  .pw-wrap input { padding-right: 64px; }
+  .pw-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+               padding: 4px 10px; font-size: .8rem; background: #fff; color: var(--accent); border-width: 1px; }
+  /* Form header bar and success message */
+  header.bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .logout { background: transparent; color: #fff; border-color: #6d7aa0; padding: 8px 18px; }
+  .logout:hover { background: #2b3860; }
+  .success { display: none; margin: 24px 36px 0; padding: 14px 16px; border-radius: 6px;
+             background: #e6f5ec; color: var(--ok); font-weight: 600; }
+  .success.show { display: block; }
+
+  /* Split-screen login with company branding */
+  .card.login { display: grid; grid-template-columns: 1.05fr 1fr; max-width: 920px; margin-top: 5vh; }
+  .card.login[hidden] { display: none; }
+  .brand {
+    position: relative; overflow: hidden; color: #fff;
+    padding: 40px 36px 0; display: flex; flex-direction: column;
+    background: linear-gradient(160deg, #1c2540 0%, #0d5566 58%, #0e7c6b 100%);
+  }
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo svg { flex: none; }
+  .logo strong { display: block; font-size: 1.35rem; letter-spacing: .3px; line-height: 1.15; }
+  .logo span { font-size: .78rem; color: #9fe0d3; letter-spacing: 2px; text-transform: uppercase; }
+  .brand h2 { margin: 34px 0 10px; font-size: 1.75rem; line-height: 1.25; font-weight: 650; }
+  .brand p { margin: 0; color: #c5d3e6; font-size: .95rem; max-width: 34ch; }
+  .stats { display: flex; gap: 22px; margin-top: 26px; }
+  .stats b { display: block; font-size: 1.3rem; color: #fff; }
+  .stats small { color: #9fb2cc; font-size: .75rem; }
+  .skyline { margin-top: auto; width: calc(100% + 72px); margin-left: -36px; display: block; }
+  .panel { padding: 48px 40px 36px; display: flex; flex-direction: column; justify-content: center; }
+  .panel h3 { margin: 0 0 4px; font-size: 1.6rem; }
+  .panel .sub { margin: 0 0 24px; color: var(--muted); font-size: .92rem; }
+  .card.login .panel form { padding: 0; }
+  @media (max-width: 760px) {
+    .card.login { grid-template-columns: 1fr; margin-top: 0; }
+    .brand { padding: 28px 24px 0; }
+    .brand h2 { font-size: 1.35rem; margin-top: 22px; }
+    .stats, .skyline { display: none; }
+    .brand { padding-bottom: 24px; }
+    .panel { padding: 28px 24px 32px; }
+  }
+
+  /* 16:9 login layout */
+  .card.login {
+    width: min(1120px, 100%, calc((100vh - 64px) * 16 / 9));
+    max-width: none; aspect-ratio: 16 / 9;
+    margin: 0 auto; grid-template-columns: 1.2fr 1fr;
+  }
+  .brand { padding: 4% 0 0 4%; min-height: 0; }
+  .brand h2 { font-size: clamp(1.15rem, 2.3vw, 1.9rem); margin: 4% 0 8px; padding-right: 4%; }
+  .brand p { padding-right: 4%; font-size: clamp(.8rem, 1.2vw, .98rem); }
+  .hq { flex: 1 1 0; min-height: 0; width: calc(100% + 4%); margin: 10px 0 0 -4%; display: block; }
+  .panel { padding: 0 6%; }
+  @media (max-width: 900px) {
+    .card.login { aspect-ratio: auto; width: 100%; grid-template-columns: 1fr; }
+    .brand { padding: 28px 24px 0; }
+    .brand h2, .brand p { padding-right: 0; }
+    .hq { flex: none; height: 170px; width: calc(100% + 48px); margin: 18px 0 0 -24px; }
+    .panel { padding: 28px 24px 32px; }
+  }
+  @media (min-width: 761px) and (max-width: 900px) {
+    .card.login { grid-template-columns: 1fr 1fr; }
+  }
+
+  input[readonly] { background: #f3f6fa; color: var(--muted); cursor: default; }
+  input[readonly]:focus { box-shadow: none; border-color: var(--line); }
+</style>
+</head>
+<body>
+<div class="card login" id="loginCard">
+  <aside class="brand">
+    <div class="logo">
+      <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#2fc4a8"/><stop offset="1" stop-color="#0e7c6b"/></linearGradient></defs>
+        <rect width="52" height="52" rx="13" fill="url(#lg)"/>
+        <path d="M9 36 Q26 8 43 36" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+        <path d="M15 28.5V36M21 22.5V36M31 22.5V36M37 28.5V36" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M7 37h38" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+      </svg>
+      <div><strong>TalentBridge Solutions</strong><span>Recruitment Portal</span></div>
+    </div>
+    <h2>Connecting great companies with great people.</h2>
+    <p>Post your openings, reach qualified candidates and hire faster.</p>
+    <svg class="hq" viewBox="0 0 520 300" preserveAspectRatio="xMidYMax slice" role="img" aria-label="TalentBridge Solutions head office building">
+      <defs>
+        <pattern id="w1" width="16" height="18" patternUnits="userSpaceOnUse">
+          <rect x="4" y="4" width="8" height="10" rx="1" fill="#bdf3e7" fill-opacity=".7"/></pattern>
+        <pattern id="w2" width="14" height="16" patternUnits="userSpaceOnUse">
+          <rect x="4" y="4" width="6" height="8" rx="1" fill="#ffffff" fill-opacity=".35"/></pattern>
+      </defs>
+      <circle cx="440" cy="52" r="26" fill="#fff" fill-opacity=".18"/>
+      <ellipse cx="90" cy="60" rx="44" ry="11" fill="#fff" fill-opacity=".12"/>
+      <ellipse cx="120" cy="52" rx="30" ry="9" fill="#fff" fill-opacity=".12"/>
+      <ellipse cx="380" cy="100" rx="38" ry="9" fill="#fff" fill-opacity=".1"/>
+      <!-- side buildings -->
+      <rect x="40" y="130" width="110" height="170" fill="#0b3f4d"/>
+      <rect x="40" y="130" width="110" height="170" fill="url(#w2)"/>
+      <rect x="340" y="100" width="120" height="200" fill="#0b3f4d"/>
+      <rect x="340" y="100" width="120" height="200" fill="url(#w2)"/>
+      <rect x="465" y="170" width="55" height="130" fill="#0b3f4d"/>
+      <rect x="465" y="170" width="55" height="130" fill="url(#w2)"/>
+      <!-- head office tower -->
+      <rect x="160" y="42" width="170" height="258" fill="#12354a"/>
+      <rect x="160" y="42" width="170" height="258" fill="url(#w1)"/>
+      <rect x="160" y="42" width="170" height="34" fill="#0e7c6b"/>
+      <g transform="translate(170 47)">
+        <rect width="24" height="24" rx="6" fill="#2fc4a8"/>
+        <path d="M4 17Q12 3 20 17" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M3 18h18" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+      </g>
+      <text x="202" y="65" fill="#fff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="1.2">TALENTBRIDGE</text>
+      <rect x="160" y="76" width="170" height="4" fill="#2fc4a8" fill-opacity=".8"/>
+      <!-- entrance -->
+      <rect x="222" y="246" width="46" height="54" rx="2" fill="#bdf3e7" fill-opacity=".85"/>
+      <path d="M245 246v54" stroke="#12354a" stroke-width="2"/>
+      <rect x="210" y="238" width="70" height="8" fill="#0e7c6b"/>
+      <!-- people -->
+      <g fill="#fff" fill-opacity=".9">
+        <circle cx="190" cy="270" r="5"/><rect x="185" y="277" width="10" height="23" rx="5"/>
+        <circle cx="300" cy="272" r="5"/><rect x="295" y="279" width="10" height="21" rx="5"/>
+        <circle cx="312" cy="273" r="4.5" fill-opacity=".7"/><rect x="307.5" y="279" width="9" height="21" rx="4.5" fill-opacity=".7"/>
+      </g>
+      <!-- trees -->
+      <g fill="#2fc4a8" fill-opacity=".75">
+        <circle cx="22" cy="268" r="18"/><circle cx="130" cy="276" r="13"/><circle cx="352" cy="277" r="12"/><circle cx="500" cy="272" r="16"/></g>
+      <g fill="#0a3d44"><rect x="20" y="280" width="4" height="20"/><rect x="128" y="286" width="4" height="14"/>
+        <rect x="350" y="287" width="4" height="13"/><rect x="498" y="284" width="4" height="16"/></g>
+      <rect y="292" width="520" height="8" fill="#0a3d44"/>
+    </svg>
+  </aside>
+
+  <section class="panel">
+    <h3>Welcome back</h3>
+    <p class="sub">Sign in to register a job vacancy.</p>
+    <form id="loginForm" novalidate>
+      <div class="alert" id="loginError" role="alert">Incorrect username or password.</div>
+      <div class="field">
+        <label class="req" for="username">Username (Register / D.No)</label>
+        <input type="text" id="username" name="username" required minlength="4" maxlength="30"
+               autocomplete="username" placeholder="e.g. 24CSU123">
+        <span class="error">Enter your register number, 4 to 30 characters.</span>
+      </div>
+      <div class="field">
+        <label class="req" for="password">Password (Date of birth)</label>
+        <div class="pw-wrap">
+          <input type="password" id="password" name="password" required
+                 pattern="[0-3][0-9]-[0-1][0-9]-[0-9]{4}" maxlength="10"
+                 autocomplete="current-password" placeholder="DD-MM-YYYY"
+                 title="Enter your date of birth as DD-MM-YYYY">
+          <button type="button" class="pw-toggle" id="pwToggle">Show</button>
+        </div>
+        <span class="error">Enter your date of birth as DD-MM-YYYY, e.g. 15-08-2005.</span>
+      </div>
+      <button type="submit">Log in</button>
+      <p class="demo">Enter your register number and date of birth to continue.</p>
+    </form>
+  </section>
+</div>
+
+<div class="card" id="formCard" hidden>
+  <header class="bar">
+    <div>
+      <h1>Job Vacancy Registration</h1>
+      <p>Fill in the details below to post an opening. Fields marked * are required.</p>
+    </div>
+    <button type="button" class="logout" id="logout">Log out</button>
+  </header>
+  <div class="success" id="success" role="status">Vacancy registered successfully.</div>
+
+  <form id="jobForm" action="#" method="post">
+
+    <fieldset>
+      <legend>Company details</legend>
+      <div class="grid">
+        <div class="field full">
+          <label class="req" for="company">Company name</label>
+          <input type="text" id="company" name="company" required minlength="2" maxlength="80"
+                 pattern="[A-Za-z0-9&.,'\- ]{2,80}" placeholder="e.g. Nilgiri Software Pvt Ltd"
+                 title="Use letters, numbers and basic punctuation only">
+          <span class="error">Enter a valid company name (2 to 80 characters).</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="email">Official email</label>
+          <input type="email" id="email" name="email" required placeholder="hr@company.com">
+          <span class="error">Enter a valid email address, like hr@company.com.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="phone">Contact number</label>
+          <input type="tel" id="phone" name="phone" required inputmode="numeric"
+                 pattern="[6-9][0-9]{9}" maxlength="10" placeholder="9876543210"
+                 title="Enter a 10-digit mobile number starting with 6, 7, 8 or 9">
+          <span class="hint">10-digit mobile number</span>
+          <span class="error">Enter a 10-digit number starting with 6, 7, 8 or 9.</span>
+        </div>
+
+        <div class="field">
+          <label for="contact">Contact person</label>
+          <input type="text" id="contact" name="contact" minlength="3" maxlength="50"
+                 pattern="[A-Za-z .]{3,50}" placeholder="e.g. Priya Raman"
+                 title="Letters, spaces and dots only">
+          <span class="error">Use letters only (3 to 50 characters).</span>
+        </div>
+
+        <div class="field">
+          <label for="website">Company website</label>
+          <input type="url" id="website" name="website" placeholder="https://www.company.com"
+                 pattern="https?://.+">
+          <span class="error">Enter a full URL starting with http:// or https://.</span>
+        </div>
+        <div class="field">
+          <label class="req" for="industry">Industry type</label>
+          <select id="industry" name="industry" required>
+            <option value="" selected disabled>Select industry</option>
+            <option>IT and Software</option>
+            <option>Banking and Finance</option>
+            <option>Manufacturing</option>
+            <option>Healthcare</option>
+            <option>Education</option>
+            <option>Retail and E-commerce</option>
+            <option>Logistics and Transport</option>
+            <option>Other</option>
+          </select>
+          <span class="error">Choose an industry type.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="size">Company size</label>
+          <select id="size" name="size" required>
+            <option value="" selected disabled>Select employees</option>
+            <option>1 - 10</option>
+            <option>11 - 50</option>
+            <option>51 - 200</option>
+            <option>201 - 1000</option>
+            <option>1000+</option>
+          </select>
+          <span class="error">Choose the company size.</span>
+        </div>
+
+        <div class="field full">
+          <label class="req" for="address">Company address</label>
+          <input type="text" id="address" name="address" required minlength="10" maxlength="150"
+                 placeholder="Door no, street, area">
+          <span class="error">Enter the full address (at least 10 characters).</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="city">City</label>
+          <input type="text" id="city" name="city" required minlength="2" maxlength="40"
+                 pattern="[A-Za-z .\-]{2,40}" placeholder="e.g. Tiruchirappalli"
+                 title="Letters, spaces and dots only">
+          <span class="error">Enter a valid city name.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="pincode">PIN code</label>
+          <input type="text" id="pincode" name="pincode" required inputmode="numeric" maxlength="6"
+                 pattern="[1-9][0-9]{5}" placeholder="620002"
+                 title="Enter a 6-digit PIN code that does not start with 0">
+          <span class="error">Enter a valid 6-digit PIN code.</span>
+        </div>
+
+        <div class="field">
+          <label for="gstin">GSTIN (optional)</label>
+          <input type="text" id="gstin" name="gstin" maxlength="15"
+                 pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]" placeholder="33ABCDE1234F1Z5"
+                 title="15-character GST number, e.g. 33ABCDE1234F1Z5">
+          <span class="error">Enter a valid 15-character GSTIN.</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Job details</legend>
+      <div class="grid">
+        <div class="field">
+          <label for="vacid">Vacancy ID</label>
+          <input type="text" id="vacid" name="vacid" readonly>
+          <span class="hint">Generated automatically</span>
+        </div>
+
+        <div class="field">
+          <label for="posted">Posted on</label>
+          <input type="text" id="posted" name="posted" readonly>
+        </div>
+
+        <div class="field">
+          <label class="req" for="title">Job title</label>
+          <input type="text" id="title" name="title" required minlength="3" maxlength="60"
+                 placeholder="e.g. Database Administrator">
+          <span class="error">Job title must be 3 to 60 characters.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="dept">Department</label>
+          <select id="dept" name="dept" required>
+            <option value="" selected disabled>Select department</option>
+            <option>Software Development</option>
+            <option>Data and Analytics</option>
+            <option>Networking and Security</option>
+            <option>Quality Assurance</option>
+            <option>Human Resources</option>
+            <option>Sales and Marketing</option>
+            <option>Other</option>
+          </select>
+          <span class="error">Choose a department.</span>
+        </div>
+
+        <div class="field">
+          <span class="label req" id="type-label">Job type</span>
+          <div class="choices" role="radiogroup" aria-labelledby="type-label">
+            <label><input type="radio" name="jobtype" value="Full-time" required> Full-time</label>
+            <label><input type="radio" name="jobtype" value="Part-time"> Part-time</label>
+            <label><input type="radio" name="jobtype" value="Internship"> Internship</label>
+            <label><input type="radio" name="jobtype" value="Contract"> Contract</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="req" for="mode">Work mode</label>
+          <select id="mode" name="mode" required>
+            <option value="" selected disabled>Select work mode</option>
+            <option>On-site</option>
+            <option>Hybrid</option>
+            <option>Remote</option>
+          </select>
+          <span class="error">Choose a work mode.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="location">Job location</label>
+          <input type="text" id="location" name="location" required minlength="2" maxlength="60"
+                 placeholder="e.g. Tiruchirappalli, Tamil Nadu">
+          <span class="error">Enter the job location.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="openings">Number of openings</label>
+          <input type="number" id="openings" name="openings" required min="1" max="500" step="1" placeholder="1">
+          <span class="hint">Between 1 and 500</span>
+          <span class="error">Enter a whole number between 1 and 500.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="exp">Experience required (years)</label>
+          <input type="number" id="exp" name="exp" required min="0" max="40" step="1" placeholder="0">
+          <span class="hint">Enter 0 for freshers</span>
+          <span class="error">Enter a whole number between 0 and 40.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="level">Job level</label>
+          <select id="level" name="level" required>
+            <option value="" selected disabled>Select level</option>
+            <option>Entry level / Fresher</option>
+            <option>Junior</option>
+            <option>Mid level</option>
+            <option>Senior</option>
+            <option>Team lead / Manager</option>
+          </select>
+          <span class="error">Choose a job level.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="salmin">Minimum salary per year (INR)</label>
+          <input type="number" id="salmin" name="salmin" required min="0" max="10000000" step="1000" placeholder="e.g. 300000">
+          <span class="error">Enter an amount up to 1,00,00,000.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="salmax">Maximum salary per year (INR)</label>
+          <input type="number" id="salmax" name="salmax" required min="0" max="10000000" step="1000" placeholder="e.g. 600000">
+          <span class="error">Enter an amount up to 1,00,00,000 that is not below the minimum salary.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="qualification">Minimum qualification</label>
+          <select id="qualification" name="qualification" required>
+            <option value="" selected disabled>Select qualification</option>
+            <option>Diploma</option>
+            <option>B.Sc / BCA</option>
+            <option>B.E / B.Tech</option>
+            <option>M.Sc / MCA</option>
+            <option>M.E / M.Tech</option>
+            <option>Any degree</option>
+          </select>
+          <span class="error">Choose a qualification.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="deadline">Last date to apply</label>
+          <input type="date" id="deadline" name="deadline" required>
+          <span class="error">Choose a date that is today or later.</span>
+        </div>
+
+        <div class="field full">
+          <label class="req" for="skills">Skills required</label>
+          <input type="text" id="skills" name="skills" required minlength="3" maxlength="150"
+                 placeholder="e.g. SQL, PL/SQL, MySQL, normalization">
+          <span class="hint">Separate skills with commas</span>
+          <span class="error">List at least one skill (3 to 150 characters).</span>
+        </div>
+
+        <div class="field full">
+          <label class="req" for="desc">Job description</label>
+          <textarea id="desc" name="desc" required minlength="50" maxlength="1000"
+                    placeholder="Describe the role, responsibilities and expectations."></textarea>
+          <span class="hint">50 to 1000 characters</span>
+          <span class="error">Description must be at least 50 characters long.</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Hiring process</legend>
+      <div class="grid">
+        <div class="field">
+          <label class="req" for="applymail">Send applications to</label>
+          <input type="email" id="applymail" name="applymail" required placeholder="careers@company.com">
+          <span class="error">Enter a valid email address.</span>
+        </div>
+
+        <div class="field">
+          <label class="req" for="joining">Expected joining</label>
+          <select id="joining" name="joining" required>
+            <option value="" selected disabled>Select joining time</option>
+            <option>Immediate</option>
+            <option>Within 15 days</option>
+            <option>Within 30 days</option>
+            <option>Within 60 days</option>
+            <option>Within 90 days</option>
+          </select>
+          <span class="error">Choose the expected joining time.</span>
+        </div>
+
+        <div class="field">
+          <span class="label req" id="interview-label">Interview mode</span>
+          <div class="choices" role="radiogroup" aria-labelledby="interview-label">
+            <label><input type="radio" name="interview" value="Online" required> Online</label>
+            <label><input type="radio" name="interview" value="In-person"> In-person</label>
+            <label><input type="radio" name="interview" value="Telephonic"> Telephonic</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="req" for="shift">Work shift</label>
+          <select id="shift" name="shift" required>
+            <option value="" selected disabled>Select shift</option>
+            <option>Day shift</option>
+            <option>Night shift</option>
+            <option>Rotational</option>
+            <option>Flexible</option>
+          </select>
+          <span class="error">Choose a work shift.</span>
+        </div>
+
+        <div class="field full">
+          <span class="label" id="benefits-label">Benefits offered</span>
+          <div class="choices" role="group" aria-labelledby="benefits-label">
+            <label><input type="checkbox" name="benefits" value="Health insurance"> Health insurance</label>
+            <label><input type="checkbox" name="benefits" value="Provident fund"> Provident fund</label>
+            <label><input type="checkbox" name="benefits" value="Paid leave"> Paid leave</label>
+            <label><input type="checkbox" name="benefits" value="Performance bonus"> Performance bonus</label>
+            <label><input type="checkbox" name="benefits" value="Work from home"> Work from home</label>
+            <label><input type="checkbox" name="benefits" value="Training"> Training</label>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label for="notes">How to apply / extra instructions</label>
+          <textarea id="notes" name="notes" maxlength="300" style="min-height:80px"
+                    placeholder="e.g. Attach your resume and portfolio link."></textarea>
+          <span class="hint">Up to 300 characters</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="agree">
+      <label>
+        <input type="checkbox" name="agree" required>
+        I confirm that the details above are correct.
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="submit">Register vacancy</button>
+      <button type="reset">Clear form</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  var loginCard = document.getElementById("loginCard");
+  var formCard = document.getElementById("formCard");
+  var loginForm = document.getElementById("loginForm");
+  var loginError = document.getElementById("loginError");
+  var jobForm = document.getElementById("jobForm");
+  var success = document.getElementById("success");
+
+  // Any register number can log in, as long as it matches the required
+  // format (register number + date of birth). This is a front-end only
+  // check; a real site must verify these against student records on a server.
+  loginForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!loginForm.checkValidity()) { loginForm.reportValidity(); return; }
+    loginError.classList.remove("show");
+    loginCard.hidden = true;
+    formCard.hidden = false;
+    window.scrollTo(0, 0);
+  });
+
+  document.getElementById("pwToggle").addEventListener("click", function () {
+    var pw = document.getElementById("password");
+    var show = pw.type === "password";
+    pw.type = show ? "text" : "password";
+    this.textContent = show ? "Hide" : "Show";
+  });
+
+  // Runs only when every field passes validation
+  jobForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    success.classList.add("show");
+    jobForm.reset();
+    window.scrollTo(0, 0);
+  });
+  jobForm.addEventListener("input", function () { success.classList.remove("show"); });
+
+  document.getElementById("logout").addEventListener("click", function () {
+    formCard.hidden = true;
+    loginCard.hidden = false;
+    success.classList.remove("show");
+    loginForm.reset();
+  });
+
+  // Auto vacancy ID and posted date
+  function initMeta() {
+    var t = new Date();
+    var id = "TB-" + t.getFullYear() + "-" + String(Math.floor(1000 + Math.random() * 9000));
+    document.getElementById("vacid").value = id;
+    document.getElementById("posted").value = t.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  }
+  // Maximum salary cannot be lower than minimum salary
+  var salMin = document.getElementById("salmin"), salMax = document.getElementById("salmax");
+  function syncSalary() { salMax.min = salMin.value || 0; }
+  salMin.addEventListener("input", syncSalary);
+  // GSTIN in capitals
+  document.getElementById("gstin").addEventListener("input", function () { this.value = this.value.toUpperCase(); });
+  jobForm.addEventListener("reset", function () { setTimeout(function () { initMeta(); syncSalary(); }, 0); });
+  initMeta();
+
+  // Block past dates for the deadline field
+  var d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  document.getElementById("deadline").min = d.toISOString().split("T")[0];
+</script>
+</body>
+</html>
